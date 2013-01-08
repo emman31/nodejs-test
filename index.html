@@ -1,0 +1,86 @@
+<script src="jquery-1.8.3.min.js"></script>
+<script src="../../node_modules/socket.io/node_modules/socket.io-client/dist/socket.io.js"></script>
+<style type="text/css">
+  #field {
+    background-color: #d8da3d;
+  }
+  .player {
+    position: absolute;
+  }
+</style>
+
+<div tabindex="0" id="field">
+
+</div>
+
+<script>
+  var socket = io.connect('http://192.168.1.174:8080');
+  socket.emit('my other event', { my: 'data' });
+  socket.on('message', function (data) {
+    console.log(data);
+//    socket.emit('my other event', { my: 'data' });
+  });
+
+  socket.on('init field', function(field) {
+    $("#field").width(field.width);
+    $("#field").height(field.width);
+  });
+
+  socket.on('set position', function(data, myself) {
+    var classes = "player";
+    if (myself) {
+      classes += " me";
+    }
+    $("#field").append("<div class='" + classes + "' id='" + data.id + "'></div>");
+    $("#" + data.id).width(data.width);
+    $("#" + data.id).height(data.height);
+    $("#" + data.id).css('top', data.y);
+    $("#" + data.id).css('left', data.x);
+    $("#" + data.id).css('background-color', data.color);
+  });
+  socket.on('remove player', function(id){
+    $('#' + id).remove();
+  });
+
+  var speed = 1;
+  var xSpeed = 0;
+  var ySpeed = 0;
+  var moving = false;
+
+  $("#field").keydown(function(event) {
+    var pressedArrow = false;
+    switch(event.which) {
+      case 37: // Left
+        xSpeed -= speed;
+        pressedArrow = true;
+      break;
+      case 38: // Up
+        ySpeed -= speed;
+        pressedArrow = true;
+      break;
+      case 39: // Right
+        xSpeed += speed;
+        pressedArrow = true;
+      break;
+      case 40: // Down
+        ySpeed += speed;
+        pressedArrow = true;
+      break;
+    }
+    
+    if (!moving && pressedArrow) {
+      move($(".me").attr("id"), xSpeed, ySpeed);
+    }
+  });
+  
+  function move(id, xMod, yMod) {
+     var player = $("#" + id);
+     var x = parseInt(player.css('left').replace("px", "")),
+         y = parseInt(player.css('top').replace("px", ""));
+
+     player.css('left', x + xMod);
+     player.css('top', y + yMod);
+  }
+  
+</script>
+
